@@ -1,0 +1,80 @@
+---
+title: "Project"
+author: "Julian Gimbel"
+date: "Sunday, July 26, 2015"
+output: html_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+
+training <- read.csv("pml-training.csv")
+testing <- read.csv("pml-testing.csv")
+
+summary(training)
+training$classe
+
+summary(testing)
+cntr <- colnames(training)
+cnte <- colnames(testing)
+
+cntr[which(!cntr %in% cnte)]
+cnte[which(!cnte %in% cntr)]
+
+testing$problem_id
+
+Remove the columns that are NA.
+
+training <- training[,colSums(is.na(testing))<nrow(testing)]
+testing <- testing[,colSums(is.na(testing))<nrow(testing)]
+
+training[,"X"] <- NULL
+training[,"user_name"] <- NULL
+training[,"raw_timestamp_part_1"] <- NULL
+training[,"raw_timestamp_part_2"] <- NULL
+training[,"cvtd_timestamp"] <- NULL
+
+
+testing[,"X"] <- NULL
+testing[,"user_name"] <- NULL
+testing[,"raw_timestamp_part_1"] <- NULL
+testing[,"raw_timestamp_part_2"] <- NULL
+testing[,"cvtd_timestamp"] <- NULL
+
+
+library(caret)
+
+library(doParallel)
+cl <- makeCluster(2)
+registerDoParallel(cl)
+
+fitControl <- trainControl(## 10-fold CV
+                           method = "repeatedcv",
+                           number = 10,
+                           ## repeated ten times
+                           repeats = 10)
+
+tr <- train(classe ~ ., data = training, method = "rpart", trControl = fitControl)
+
+Random Forest takes to long to compute.
+
+trrf <- train(classe ~ ., data = training, method = "rf", trControl = fitControl)
+
+tr
+
+pr <- predict(tr, newdata = testing)
+
+pr
+
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
